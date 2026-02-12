@@ -1,3 +1,4 @@
 streamlit
 requests
 streamlit-diff-viewer
+st-diff-viewer
