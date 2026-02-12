@@ -1,4 +1,4 @@
-# **Alation AI-Ready Documentation Linter**
+# **Documentation Linter for AI-Readiness**
 
 A Streamlit web application designed to automatically fetch, analyze, and correct reStructuredText (reST) documentation files from GitHub. This tool enforces Alation's "Cognitive Interface" style guide, ensuring all documentation is optimized for both human readability and Large Language Model (LLM) Retrieval-Augmented Generation (RAG) pipelines.
 
