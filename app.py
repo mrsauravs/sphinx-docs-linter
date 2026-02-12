@@ -22,17 +22,20 @@ def fetch_from_github(repo, branch, path):
         headers["Authorization"] = f"token {st.secrets['github_token']}"
     
     url = f"https://raw.githubusercontent.com/{repo}/{branch}/{path}"
-    response = requests.get(url, headers=headers)
-    
-    if response.status_code == 200:
-        return response.text
-    else:
-        st.error(f"Failed to fetch file. HTTP Status: {response.status_code}")
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.text
+        else:
+            st.error(f"Failed to fetch file. HTTP Status: {response.status_code}")
+            return None
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
         return None
 
 def apply_ai_ready_corrections(text):
     """Applies 'The Cognitive Interface' style guide rules to the text."""
-    issues_flagged =  # Fixed: List is now properly initialized
+    issues_flagged = []  # Fixed: Initialized the list correctly
     corrected_text = text
     
     # Rule 1: Enforce Alation's Specific Metadata Block after the H1 Title
@@ -63,12 +66,15 @@ def apply_ai_ready_corrections(text):
             corrected_text = meta_template + corrected_text
         
     # Rule 2: Qualify Generic Headings
+    # Searches for headings like 'Setup', 'Configuration' followed by an underline
     heading_pattern = r"^((?:Setup|Configuration|Prerequisites|Troubleshooting)\n)([-=~]+)$"
     if re.search(heading_pattern, corrected_text, re.MULTILINE):
         issues_flagged.append("Generic headings qualified with feature context.")
+        
         def fix_heading(match):
-            # Appends a placeholder feature name and extends the underline
-            return f"{match.group(1).strip()}\n{match.group(2)}{'-'*15}"
+            # Appends a placeholder feature name and extends the underline to match reST syntax requirements
+            return f"{match.group(1).strip()} <Feature Name>\n{match.group(2)}{'-'*15}"
+            
         corrected_text = re.sub(heading_pattern, fix_heading, corrected_text, flags=re.MULTILINE)
         
     # Rule 3: Correct Ambiguous Terminology
@@ -76,9 +82,10 @@ def apply_ai_ready_corrections(text):
         issues_flagged.append("Ambiguous 'cloud instance' changed to 'Alation Cloud Service (ACS)'.")
         corrected_text = re.sub(r"\b[Cc]loud [Ii]nstance\b", "Alation Cloud Service (ACS)", corrected_text)
         
-    if re.search(r"\b(he [Ii]nstance)\b", corrected_text):
+    # Fixed typo: "he Instance" -> "[Tt]he Instance"
+    if re.search(r"\b([Tt]he [Ii]nstance)\b", corrected_text):
         issues_flagged.append("Ambiguous 'the instance' changed to 'the Alation Server'.")
-        corrected_text = re.sub(r"\bhe [Ii]nstance\b", "the Alation Server", corrected_text)
+        corrected_text = re.sub(r"\b[Tt]he [Ii]nstance\b", "the Alation Server", corrected_text)
         
     # Rule 4: Apply Semantic Roles for UI Elements
     if re.search(r"\*\*(Settings|Data Sources|Save|Cancel|Add Data Source)\*\*", corrected_text):
